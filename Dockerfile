@@ -20,8 +20,7 @@ COPY . .
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Cache Laravel config, routes, and views
-RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
+
 
 # Set correct permissions for storage and cache
 RUN chown -R www-data:www-data storage bootstrap/cache
