@@ -29,4 +29,4 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 EXPOSE 10000
 
 # Start Laravel’s built-in server
-CMD ["sh", "-c", "php artisan migrate --force --seed && php artisan storage:link && php artisan serve --host=0.0.0.0 --port=10000"]
+CMD bash -c "php artisan storage:link && php artisan serve --host=0.0.0.0 --port=10000"
