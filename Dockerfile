@@ -1,30 +1,33 @@
-# Use official PHP image with FPM and Debian base
+# Use the official PHP 8.2 FPM image
 FROM php:8.2-fpm
-
-# Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libjpeg-dev libonig-dev libxml2-dev \
-    libzip-dev libpq-dev libfreetype6-dev libjpeg62-turbo-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
-
-# Install Composer globally
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www
 
-# Copy application source
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
+    libonig-dev libxml2-dev libzip-dev libpq-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath zip gd
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy the application code
 COPY . .
 
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Ensure correct permissions
+# Cache Laravel config, routes, and views
+RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
+
+# Set correct permissions for storage and cache
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose Laravel's default serve port
-EXPOSE 8000
+# Expose port expected by Render
+EXPOSE 10000
 
-# Default CMD (Render overrides with custom startCommand)
-CMD ["php-fpm"]
+# Start Laravel’s built-in server
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
